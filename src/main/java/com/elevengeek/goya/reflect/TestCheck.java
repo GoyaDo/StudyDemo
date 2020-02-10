@@ -1,0 +1,57 @@
+package com.elevengeek.goya.reflect;
+
+import com.elevengeek.goya.anno.Check;
+import com.elevengeek.goya.entity.Person;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+/**
+ * @author cj
+ * @create 2020-02-10-22:39
+ * 当主方法执行后，会自动执行加了Check注解的所有方法是否存在异常,然后记录到文件中
+ */
+public class TestCheck {
+    public static void main(String[] args) throws IOException {
+        //创建被检测的对象
+        Person person = new Person();
+        //获取字节码文件对象
+        Class<? extends Person> personClass = person.getClass();
+        //获取所有的方法
+        Method[] methods = personClass.getMethods();
+
+        //出现异常的次数
+        int number = 0;
+
+        BufferedWriter bw = new BufferedWriter(new FileWriter("bug.txt"));
+
+        for (Method method : methods){
+            //判断方法上是否有Check注解
+            if (method.isAnnotationPresent(Check.class)){
+                //有注解，执行
+                try {
+                    method.invoke(person);
+                } catch (Exception e) {
+                    //捕获异常
+                    //记录到文件中
+                    number++;
+                    bw.write(method.getName()+"方法出异常了");
+                    bw.newLine();
+                    //e.getCause()异常原因
+                    bw.write("异常的名称："+e.getCause().getClass().getSimpleName());
+                    bw.newLine();
+                    bw.write("异常的原因："+e.getCause().getMessage());
+                    bw.newLine();
+                    bw.write("---------------------");
+                    bw.newLine();
+                }
+            }
+        }
+        bw.write("本次测试一共出现"+number+"次异常");
+        bw.flush();
+        bw.close();
+    }
+}
